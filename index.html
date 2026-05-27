@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PFP Generator - AI Profile Picture Creator</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --primary: #7c3aed;
+      --accent: #db2777;
+      --bg: #faf9ff;
+      --card: #ffffff;
+      --text: #1a1523;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+    }
+    body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); }
+
+    /* NAV */
+    nav { display:flex; align-items:center; justify-content:space-between; padding:1rem 2rem; border-bottom:1px solid var(--border); background:white; position:sticky; top:0; z-index:10; }
+    nav .logo { font-weight:800; font-size:1.1rem; background:linear-gradient(135deg,var(--primary),var(--accent)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    nav a { font-size:0.85rem; color:var(--muted); text-decoration:none; font-weight:500; }
+    nav a:hover { color:var(--text); }
+
+    /* HERO */
+    .hero { text-align:center; padding:5rem 1.5rem 4rem; background:linear-gradient(135deg,#faf9ff,#f3e8ff,#fce7f3); position:relative; overflow:hidden; }
+    .hero::before,.hero::after { content:''; position:absolute; border-radius:50%; filter:blur(80px); pointer-events:none; }
+    .hero::before { width:400px;height:400px;top:-100px;left:10%;background:rgba(124,58,237,0.1); }
+    .hero::after { width:350px;height:350px;bottom:-100px;right:10%;background:rgba(219,39,119,0.08); }
+    .hero .badge { display:inline-flex;align-items:center;gap:0.4rem;background:rgba(124,58,237,0.1);color:var(--primary);font-size:0.75rem;font-weight:600;padding:0.4rem 1rem;border-radius:9999px;margin-bottom:1.5rem;border:1px solid rgba(124,58,237,0.2); }
+    .hero h1 { font-size:clamp(2.2rem,6vw,3.8rem);font-weight:900;line-height:1.1;margin-bottom:1.25rem; }
+    .hero h1 span { background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent; }
+    .hero p { font-size:1.15rem;color:var(--muted);max-width:520px;margin:0 auto 2.5rem;line-height:1.7; }
+    .hero .stats { display:flex;justify-content:center;gap:3rem;margin-top:3rem; }
+    .hero .stat-val { font-size:1.6rem;font-weight:800;color:var(--text); }
+    .hero .stat-label { font-size:0.75rem;color:var(--muted); }
+
+    /* FEATURES */
+    .features { padding:5rem 1.5rem; background:#f9fafb; }
+    .features h2 { text-align:center;font-size:2rem;font-weight:800;margin-bottom:0.75rem; }
+    .features .sub { text-align:center;color:var(--muted);margin-bottom:3rem;font-size:1rem; }
+    .styles-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:1rem;max-width:720px;margin:0 auto; }
+    .style-card { background:white;border:1px solid var(--border);border-radius:1rem;padding:1.25rem;text-align:center;transition:all 0.2s; }
+    .style-card:hover { border-color:var(--primary);box-shadow:0 4px 20px rgba(124,58,237,0.1);transform:translateY(-2px); }
+    .style-card .emoji { font-size:2rem;margin-bottom:0.5rem; }
+    .style-card .name { font-weight:700;font-size:0.85rem; }
+    .style-card .desc { font-size:0.75rem;color:var(--muted);margin-top:0.25rem; }
+
+    /* GENERATOR */
+    .generator { padding:5rem 1.5rem; background:var(--bg); }
+    .generator h2 { text-align:center;font-size:2rem;font-weight:800;margin-bottom:0.5rem; }
+    .generator .sub { text-align:center;color:var(--muted);margin-bottom:2.5rem; }
+    .gen-card { max-width:600px;margin:0 auto;background:white;border:1px solid var(--border);border-radius:1.5rem;padding:2rem;box-shadow:0 1px 8px rgba(0,0,0,0.06); }
+    .field-label { font-size:0.85rem;font-weight:600;margin-bottom:0.6rem;display:block; }
+    .chips { display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1.75rem; }
+    .chip { padding:0.45rem 1rem;border-radius:9999px;border:1px solid var(--border);font-size:0.8rem;font-weight:500;cursor:pointer;background:white;transition:all 0.15s; }
+    .chip:hover { border-color:var(--primary); }
+    .chip.active { background:var(--primary);color:white;border-color:var(--primary);transform:scale(1.05);box-shadow:0 2px 8px rgba(124,58,237,0.3); }
+    textarea { width:100%;border:1px solid var(--border);border-radius:0.75rem;padding:0.75rem;font-size:0.9rem;font-family:inherit;resize:none;height:96px;outline:none;transition:border-color 0.15s; }
+    textarea:focus { border-color:var(--primary); }
+    .gen-btn { width:100%;margin-top:1.25rem;padding:0.85rem;background:var(--primary);color:white;border:none;border-radius:0.75rem;font-size:1rem;font-weight:600;cursor:pointer;transition:opacity 0.15s;display:flex;align-items:center;justify-content:center;gap:0.5rem; }
+    .gen-btn:hover:not(:disabled) { opacity:0.9; }
+    .gen-btn:disabled { opacity:0.6;cursor:not-allowed; }
+
+    /* RESULT */
+    .result { display:flex;flex-direction:column;align-items:center;gap:1.5rem;padding-top:2.5rem; }
+    .pfp-wrapper { position:relative; }
+    .pfp-glow { position:absolute;inset:-6px;border-radius:50%;background:linear-gradient(135deg,rgba(124,58,237,0.4),rgba(219,39,119,0.4));filter:blur(12px);opacity:0.5; }
+    .pfp-img { position:relative;width:240px;height:240px;border-radius:50%;object-fit:cover;border:4px solid white;box-shadow:0 8px 32px rgba(0,0,0,0.15); }
+    .result-btns { display:flex;gap:0.75rem; }
+    .btn-dl { padding:0.6rem 1.4rem;background:var(--primary);color:white;border:none;border-radius:0.6rem;font-weight:600;cursor:pointer;font-size:0.9rem; }
+    .btn-regen { padding:0.6rem 1.4rem;background:white;color:var(--text);border:1px solid var(--border);border-radius:0.6rem;font-weight:600;cursor:pointer;font-size:0.9rem; }
+    .btn-dl:hover { opacity:0.9; } .btn-regen:hover { background:#f9fafb; }
+
+    /* LOADING */
+    .loading { display:flex;flex-direction:column;align-items:center;gap:1rem;padding-top:2.5rem; }
+    .loading-ring { width:200px;height:200px;border-radius:50%;background:#f3e8ff;position:relative;display:flex;align-items:center;justify-content:center;animation:pulse 1.5s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.6} }
+    .loading p { font-size:0.85rem;color:var(--muted); }
+
+    /* FOOTER */
+    footer { border-top:1px solid var(--border);background:#f9fafb;padding:2.5rem 1.5rem;text-align:center; }
+    footer p { font-size:0.85rem;color:var(--muted); }
+    footer .brand { font-weight:800;color:var(--text);margin-bottom:0.25rem; }
+
+    @media(max-width:600px){ .hero h1{font-size:2rem} .stats{gap:1.5rem} nav{padding:1rem} }
+  </style>
+</head>
+<body>
+
+<nav>
+  <span class="logo">✨ PFP Generator</span>
+  <a href="#generator">Try it free →</a>
+</nav>
+
+<section class="hero">
+  <div class="badge">✨ AI-Powered Profile Pictures</div>
+  <h1>Create Your Perfect<br/><span>Profile Picture</span></h1>
+  <p>Generate stunning, one-of-a-kind avatars in seconds. Choose from 8 unique art styles and make it yours — completely free.</p>
+  <a href="#generator" style="display:inline-block;background:var(--primary);color:white;padding:0.85rem 2.5rem;border-radius:0.75rem;font-weight:700;font-size:1rem;text-decoration:none;">✨ Start Generating Free</a>
+  <div class="stats">
+    <div><div class="stat-val">8+</div><div class="stat-label">Art Styles</div></div>
+    <div><div class="stat-val">∞</div><div class="stat-label">Unique Combos</div></div>
+    <div><div class="stat-val">Free</div><div class="stat-label">To Use</div></div>
+  </div>
+</section>
+
+<section class="features">
+  <h2>8 Stunning Art Styles</h2>
+  <p class="sub">Pick the vibe that matches your personality</p>
+  <div class="styles-grid">
+    <div class="style-card"><div class="emoji">🎌</div><div class="name">Anime</div><div class="desc">Vibrant studio-quality anime</div></div>
+    <div class="style-card"><div class="emoji">👾</div><div class="name">Pixel Art</div><div class="desc">Retro 32-bit aesthetic</div></div>
+    <div class="style-card"><div class="emoji">🧊</div><div class="name">3D Render</div><div class="desc">Pixar-style soft 3D</div></div>
+    <div class="style-card"><div class="emoji">🎨</div><div class="name">Watercolor</div><div class="desc">Soft artistic brush strokes</div></div>
+    <div class="style-card"><div class="emoji">🌃</div><div class="name">Cyberpunk</div><div class="desc">Neon-lit futuristic vibes</div></div>
+    <div class="style-card"><div class="emoji">◻️</div><div class="name">Minimalist</div><div class="desc">Clean flat illustration</div></div>
+    <div class="style-card"><div class="emoji">🐉</div><div class="name">Fantasy</div><div class="desc">Magical detailed art</div></div>
+    <div class="style-card"><div class="emoji">📼</div><div class="name">Retro</div><div class="desc">Synthwave 80s nostalgia</div></div>
+  </div>
+</section>
+
+<section class="generator" id="generator">
+  <h2>Generate Your PFP</h2>
+  <p class="sub">Choose a style, describe your character, and let AI do the rest.</p>
+  <div class="gen-card">
+    <label class="field-label">Art Style</label>
+    <div class="chips" id="chips"></div>
+    <label class="field-label">Character Description <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
+    <textarea id="prompt" placeholder="e.g. A cat wearing sunglasses, a warrior with blue hair, a robot with flowers..."></textarea>
+    <button class="gen-btn" id="genBtn" onclick="generate()">✨ Generate PFP</button>
+  </div>
+  <div id="output"></div>
+</section>
+
+<footer>
+  <p class="brand">PFP Generator</p>
+  <p>AI-powered profile pictures, free forever.</p>
+</footer>
+
+<script>
+const STYLES = [
+  { id:"anime",     label:"🎌 Anime",       prompt:"anime art style, vibrant colors, clean lines, studio ghibli inspired" },
+  { id:"pixel",     label:"👾 Pixel Art",    prompt:"pixel art style, 32-bit retro game aesthetic, crisp pixels" },
+  { id:"3d",        label:"🧊 3D Render",    prompt:"3D rendered, Pixar style, soft lighting, subsurface scattering" },
+  { id:"watercolor",label:"🎨 Watercolor",   prompt:"watercolor painting style, soft washes, artistic brush strokes" },
+  { id:"cyberpunk", label:"🌃 Cyberpunk",    prompt:"cyberpunk aesthetic, neon lights, futuristic, dark moody" },
+  { id:"minimalist",label:"◻️ Minimalist",   prompt:"minimalist flat illustration, simple shapes, clean design" },
+  { id:"fantasy",   label:"🐉 Fantasy",      prompt:"fantasy art style, magical atmosphere, detailed illustration" },
+  { id:"retro",     label:"📼 Retro",        prompt:"retro 80s style, synthwave colors, vintage aesthetic" },
+];
+
+let selected = "anime";
+
+function renderChips() {
+  const el = document.getElementById("chips");
+  el.innerHTML = STYLES.map(s =>
+    `<button class="chip${selected===s.id?' active':''}" onclick="select('${s.id}')">${s.label}</button>`
+  ).join("");
+}
+
+function select(id) { selected = id; renderChips(); }
+
+async function generate() {
+  const prompt = document.getElementById("prompt").value;
+  const style = STYLES.find(s => s.id === selected);
+  const fullPrompt = encodeURIComponent(
+    `Profile picture avatar, centered portrait, square 1:1, ${style.prompt}. ${prompt || "A cool unique character"}. High quality, suitable as a social media profile picture.`
+  );
+  const btn = document.getElementById("genBtn");
+  btn.disabled = true; btn.textContent = "Generating...";
+  const output = document.getElementById("output");
+  output.innerHTML = `<div class="loading"><div class="loading-ring">✨</div><p>Creating something awesome...</p></div>`;
+  const imgUrl = `https://image.pollinations.ai/prompt/${fullPrompt}?width=512&height=512&nologo=true&seed=${Math.floor(Math.random()*99999)}`;
+  const img = new Image();
+  img.onload = () => {
+    btn.disabled = false; btn.textContent = "✨ Generate PFP";
+    output.innerHTML = `
+      <div class="result">
+        <div class="pfp-wrapper">
+          <div class="pfp-glow"></div>
+          <img class="pfp-img" src="${imgUrl}" alt="Generated PFP" />
+        </div>
+        <div class="result-btns">
+          <button class="btn-dl" onclick="downloadImg('${imgUrl}')">⬇ Download</button>
+          <button class="btn-regen" onclick="generate()">↻ Regenerate</button>
+        </div>
+      </div>`;
+  };
+  img.onerror = () => {
+    btn.disabled = false; btn.textContent = "✨ Generate PFP";
+    output.innerHTML = "<p style='text-align:center;color:#ef4444;padding:1rem'>Generation failed. Please try again.</p>";
+  };
+  img.src = imgUrl;
+}
+
+async function downloadImg(url) {
+  const a = document.createElement("a");
+  a.href = url; a.download = "pfp.png"; a.target = "_blank"; a.click();
+}
+
+renderChips();
+</script>
+</body>
+</html>
